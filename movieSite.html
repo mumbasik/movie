@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Movie Search</title>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", sans-serif;
+      }
+
+      body {
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        background: linear-gradient(135deg, #0d0d0e, #2e3035);
+        padding: 40px;
+      }
+
+      .wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 35px;
+        width: 100%;
+      }
+
+      .dataCard {
+        width: 420px;
+        padding: 30px;
+        background: rgba(255, 255, 255, 0.08);
+
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 6px 30px rgba(0, 0, 0, 0.45);
+        animation: fadeIn 0.5s ease;
+        margin: 10px;
+        transform: translateY(0);
+      }
+
+      h1 {
+        color: #fff;
+        margin-bottom: 20px;
+        letter-spacing: 2px;
+        font-size: 30px;
+      }
+
+      label {
+        width: 100%;
+        margin-top: 12px;
+        color: #bfc3c7;
+        font-weight: 500;
+        font-size: 15px;
+      }
+
+      input,
+      select {
+        width: 100%;
+        padding: 12px;
+        margin-top: 5px;
+        border-radius: 10px;
+        border: 2px solid transparent;
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+        font-size: 15px;
+        transition: 0.3s;
+      }
+
+      input::placeholder {
+        color: #d9d9d9;
+      }
+
+      input:focus,
+      select:focus {
+        border-color: #00eaff;
+        background: rgba(255, 255, 255, 0.25);
+        box-shadow: 0 0 10px #00eaff;
+      }
+
+      button {
+        width: 50%;
+        padding: 12px;
+        margin-top: 22px;
+        border: none;
+        border-radius: 12px;
+        font-size: 17px;
+        cursor: pointer;
+        background: linear-gradient(135deg, #00d46f, #00a24a);
+        color: #fff;
+        transition: 0.3s ease;
+        box-shadow: 0 0 12px rgba(0, 255, 140, 0.4);
+      }
+
+      button:hover {
+        transform: scale(1.08);
+        box-shadow: 0 0 15px rgba(0, 255, 140, 0.6);
+      }
+
+      .detailsBtn {
+        width: 100%;
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 10px;
+      }
+
+      .detailsBtn:hover {
+        box-shadow: 0 0 18px rgba(0, 153, 255, 0.7);
+      }
+
+      .showCard {
+        width: 90%;
+        max-width: 1000px;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 15px;
+
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      #result {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 25px;
+      }
+
+      .movie-card {
+        width: 220px;
+        padding: 15px;
+        border-radius: 15px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: #fff;
+        transition: 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      }
+
+      .movie-card:hover {
+        transform: translateY(-6px) scale(1.05);
+      }
+
+      .movie-card img {
+        width: 100%;
+        height: 320px;
+        object-fit: cover;
+        border-radius: 12px;
+      }
+
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        animation: fadeIn 0.3s ease;
+        z-index: 999;
+      }
+
+      .detailCard {
+        width: 80%;
+        max-width: 750px;
+        background: rgba(25, 25, 28, 0.9);
+        border-radius: 18px;
+        padding: 25px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 25px rgba(182, 190, 190, 0.35);
+
+        display: flex;
+        flex-direction: row;
+        gap: 20px;
+        animation: zoomIn 0.35s ease;
+        color: #fff;
+      }
+
+      .detailCard img {
+        width: 230px;
+        height: 340px;
+        object-fit: cover;
+        border-radius: 12px;
+      }
+
+      .detail-content {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .detail-content h2 {
+        font-size: 26px;
+        letter-spacing: 1px;
+      }
+
+      .detail-content p {
+        font-size: 16px;
+        opacity: 0.9;
+      }
+
+      .detailRow strong {
+        color: #00eaff;
+      }
+
+      .closeDetail {
+        margin-top: 10px;
+        width: 140px;
+        padding: 10px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #ff5252, #d81818);
+        border: none;
+        color: #fff;
+        font-size: 16px;
+        cursor: pointer;
+        box-shadow: 0 0 15px rgba(255, 60, 60, 0.4);
+        transition: 0.3s;
+      }
+
+      .closeDetail:hover {
+        transform: scale(1.08);
+        box-shadow: 0 0 20px rgba(255, 80, 80, 0.7);
+      }
+
+      @keyframes zoomIn {
+        from {
+          opacity: 0;
+          transform: scale(0.7);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      .error {
+        border: 2px solid #ff4d4d !important;
+        box-shadow: 0 0 12px red !important;
+        background: rgba(255, 100, 100, 0.15) !important;
+      }
+
+      .error-message {
+        color: #ff4d4d;
+        margin: 5px 0 0 2px;
+        font-size: 14px;
+        display: none;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      #Pagination {
+        display: flex !important;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        margin-top: 15px;
+      }
+
+      #Pagination button {
+        padding: 5px 10px;
+        font-size: 14px;
+        border: none;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.25);
+        color: white;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+
+      #Pagination button:hover {
+        background: rgba(255, 255, 255, 0.4);
+        transform: scale(1.1);
+      }
+
+      #Pagination button:disabled {
+        background: #4caf50;
+        color: white;
+        transform: scale(1);
+        cursor: default;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="wrapper">
+      <div class="dataCard">
+        <h1>Movie Search</h1>
+
+        <label>Title:</label>
+        <input type="text" id="movieSelect" placeholder="Batman, Avatar..." />
+        <div id="noData1" class="error-message">Empty field.</div>
+
+        <label>Type:</label>
+        <select id="selectTipe">
+          <option value="None">None</option>
+          <option value="Movie">Movie</option>
+          <option value="Series">Series</option>
+          <option value="Episode">Episode</option>
+        </select>
+        <div id="noData2" class="error-message">No selection.</div>
+
+        <button id="searchBtn">Search</button>
+      </div>
+      <div class="showCard" id="found" style="display: none">
+        <div id="result"></div>
+        <div id="Pagination" style="display: none"></div>
+        <button id="Close">Close</button>
+      </div>
+    </div>
+
+    <script type="module">
+      const searchBtn = document.getElementById("searchBtn");
+      const movieSelect = document.getElementById("movieSelect");
+      const selectTipe = document.getElementById("selectTipe");
+      const apiKey = "e8e5d3ae";
+
+      const show = document.getElementById("found");
+      const result = document.getElementById("result");
+      const pagination = document.getElementById("Pagination");
+      const closeBtn = document.getElementById("Close");
+
+      let movies = [];
+      let perPage = 3;
+      let localPage = 1;
+
+      searchBtn.addEventListener("click", async () => {
+        const title = movieSelect.value.trim();
+        const type = selectTipe.value;
+
+        let url = `https://www.omdbapi.com/?apikey=${apiKey}&s=${title}&type=${type}`;
+
+        if (title === "") {
+          movieSelect.classList.add("error");
+          document.getElementById("noData1").style.display = "block";
+          return;
+        } else {
+          movieSelect.classList.remove("error");
+          document.getElementById("noData1").style.display = "none";
+        }
+        if (type === "None") {
+          selectTipe.classList.add("error");
+          document.getElementById("noData2").style.display = "block";
+          return;
+        } else {
+          selectTipe.classList.remove("error");
+          document.getElementById("noData2").style.display = "none";
+        }
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.Response === "False") return alert("Фильмы не найдены");
+
+        movies = data.Search;
+        localPage = 1;
+
+        show.style.display = "block";
+
+        renderMovies();
+        renderPagination();
+      });
+
+      function renderPagination() {
+        pagination.innerHTML = "";
+        pagination.style.display = "block";
+
+        let totalPages = Math.ceil(movies.length / perPage);
+
+        for (let i = 1; i <= totalPages; i++) {
+          const btn = document.createElement("button");
+          btn.textContent = i;
+          btn.style.margin = "0 6px";
+
+          if (i === localPage) btn.disabled = true;
+
+          btn.addEventListener("click", () => {
+            localPage = i;
+            renderMovies();
+            renderPagination();
+          });
+
+          pagination.appendChild(btn);
+        }
+      }
+
+      function renderMovies() {
+        result.innerHTML = "";
+
+        let start = (localPage - 1) * perPage;
+        let end = start + perPage;
+
+        let pageMovies = movies.slice(start, end);
+
+        pageMovies.forEach((movie) => {
+          const block = document.createElement("div");
+          block.classList.add("movie-card");
+
+          const img = document.createElement("img");
+          img.src = movie.Poster !== "N/A" ? movie.Poster : "";
+
+          const title = document.createElement("h3");
+          title.textContent = movie.Title;
+
+          const year = document.createElement("p");
+          year.textContent = "Year: " + movie.Year;
+
+          const type = document.createElement("p");
+          type.textContent = "Type: " + movie.Type;
+
+          const detailsBtn = document.createElement("button");
+          detailsBtn.classList.add("detailsBtn");
+          detailsBtn.textContent = "Details";
+
+          detailsBtn.addEventListener("click", () => {
+            const overlay = document.createElement("div");
+            overlay.className = "modal-overlay";
+
+            const card = document.createElement("div");
+            card.className = "detailCard";
+
+            card.innerHTML = `
+          <img src="${movie.Poster}">
+
+          <div class="detail-content">
+            <h2>${movie.Title}</h2>
+            <p><strong>Year:</strong> ${movie.Year}</p>
+            <p><strong>Type:</strong> ${movie.Type}</p>
+            <p><strong>IMDB ID:</strong> ${movie.imdbID}</p>
+
+            <button class="closeDetail">Close</button>
+          </div>
+        `;
+
+            overlay.appendChild(card);
+            document.body.appendChild(overlay);
+
+            card.querySelector(".closeDetail").onclick = () => overlay.remove();
+          });
+
+          block.append(img, title, year, type, detailsBtn);
+          result.appendChild(block);
+        });
+      }
+
+      closeBtn.addEventListener("click", () => {
+        show.style.display = "none";
+        pagination.style.display = "none";
+      });
+    </script>
+  </body>
+</html>
