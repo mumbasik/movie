@@ -29,6 +29,24 @@
         gap: 35px;
         width: 100%;
       }
+      .loader {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
 
       .dataCard {
         width: 420px;
@@ -248,6 +266,58 @@
         font-size: 14px;
         display: none;
       }
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+      }
+
+      .modal-window {
+        background: rgba(25, 25, 28, 0.9) !important;
+        padding: 20px 30px;
+        border-radius: 12px;
+        width: 400px;
+        min-height: 150px;
+        position: relative;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 25px rgba(182, 190, 190, 0.35);
+        text-align: center;
+      }
+
+      .close-modal {
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        font-size: 22px;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .loader-box {
+        padding: 40px 0;
+
+        padding: 40px 0;
+        display: flex;
+        justify-content: center;
+        background: transparent;
+      }
+
+      .details-box img {
+        width: 150px;
+        border-radius: 8px;
+      }
+
+      .details-box p,
+      .details-box h2 {
+        margin-top: 12px;
+      }
 
       @keyframes fadeIn {
         from {
@@ -294,7 +364,7 @@
   </head>
 
   <body>
-    <div class="wrapper">
+    <div class="wrapper" id="wrapp">
       <div class="dataCard">
         <h1>Movie Search</h1>
 
@@ -317,74 +387,109 @@
         <div id="result"></div>
         <div id="Pagination" style="display: none"></div>
         <button id="Close">Close</button>
+        <button id="More">More</button>
       </div>
     </div>
 
     <script type="module">
-      const searchBtn = document.getElementById("searchBtn");
-      const movieSelect = document.getElementById("movieSelect");
-      const selectTipe = document.getElementById("selectTipe");
-      const apiKey = "e8e5d3ae";
+      class AppDOM {
+        constructor() {
+          this.wrapper = document.getElementById("wrapp");
+          this.movieSelect = document.getElementById("movieSelect");
+          this.selectType = document.getElementById("selectTipe");
+          this.searchBtn = document.getElementById("searchBtn");
+          this.show = document.getElementById("found");
+          this.result = document.getElementById("result");
+          this.pagination = document.getElementById("Pagination");
+          this.moreBtn = document.getElementById("More");
+          this.closeBtn = document.getElementById("Close");
+          this.nodata1 = document.getElementById("noData1");
+          this.nodata2 = document.getElementById("noData2");
 
-      const show = document.getElementById("found");
-      const result = document.getElementById("result");
-      const pagination = document.getElementById("Pagination");
-      const closeBtn = document.getElementById("Close");
+          this.loader = document.createElement("div");
+          this.loader.className = "loader";
+          this.wait = document.createElement("span");
+          this.wait.style.color = "#fff";
+          this.wait.textContent = "Loading...";
+          this.wait.style.display = "none";
+
+          this.wrapper.appendChild(this.loader);
+          this.wrapper.appendChild(this.wait);
+
+          this.loader.style.display = "none";
+          this.moreBtn.style.display = "none";
+        }
+      }
+
+      const DOM = new AppDOM();
 
       let movies = [];
       let perPage = 3;
       let localPage = 1;
 
-      searchBtn.addEventListener("click", async () => {
-        const title = movieSelect.value.trim();
-        const type = selectTipe.value;
-
-        let url = `https://www.omdbapi.com/?apikey=${apiKey}&s=${title}&type=${type}`;
+      DOM.searchBtn.addEventListener("click", async () => {
+        const title = DOM.movieSelect.value.trim();
+        const type = DOM.selectType.value;
 
         if (title === "") {
-          movieSelect.classList.add("error");
-          document.getElementById("noData1").style.display = "block";
+          DOM.movieSelect.classList.add("error");
+          DOM.nodata1.style.display = "block";
           return;
         } else {
-          movieSelect.classList.remove("error");
-          document.getElementById("noData1").style.display = "none";
-        }
-        if (type === "None") {
-          selectTipe.classList.add("error");
-          document.getElementById("noData2").style.display = "block";
-          return;
-        } else {
-          selectTipe.classList.remove("error");
-          document.getElementById("noData2").style.display = "none";
+          DOM.movieSelect.classList.remove("error");
+          DOM.nodata1.style.display = "none";
         }
 
+        if (type === "None") {
+          DOM.selectType.classList.add("error");
+          DOM.nodata2.style.display = "block";
+          return;
+        } else {
+          DOM.selectType.classList.remove("error");
+          DOM.nodata2.style.display = "none";
+        }
+        async function load() {
+          DOM.loader.style.display = "block";
+          DOM.wait.style.display = "block";
+
+          await sleep(1000);
+          DOM.loader.style.display = "none";
+          DOM.wait.style.display = "none";
+        }
+        function sleep(ms) {
+          return new Promise((resolve) => setTimeout(resolve, ms));
+        }
+
+        await load();
+
+        const apiKey = "e8e5d3ae";
+        const url = `https://www.omdbapi.com/?apikey=${apiKey}&s=${title}&type=${type}`;
         const response = await fetch(url);
         const data = await response.json();
 
         if (data.Response === "False") {
-          return alert("No data found");
+          alert("Фильмы не найдены");
+          return;
         }
 
         movies = data.Search;
         localPage = 1;
 
-        show.style.display = "block";
+        DOM.show.style.display = "block";
+        DOM.moreBtn.style.display = "block";
 
         renderMovies();
         renderPagination();
       });
 
       function renderPagination() {
-        pagination.innerHTML = "";
-        pagination.style.display = "block";
+        DOM.pagination.innerHTML = "";
+        DOM.pagination.style.display = "flex";
 
-        let totalPages = Math.ceil(movies.length / perPage);
-
+        const totalPages = Math.ceil(movies.length / perPage);
         for (let i = 1; i <= totalPages; i++) {
           const btn = document.createElement("button");
           btn.textContent = i;
-          btn.style.margin = "0 6px";
-
           if (i === localPage) btn.disabled = true;
 
           btn.addEventListener("click", () => {
@@ -393,12 +498,12 @@
             renderPagination();
           });
 
-          pagination.appendChild(btn);
+          DOM.pagination.appendChild(btn);
         }
       }
 
       function renderMovies() {
-        result.innerHTML = "";
+        DOM.result.innerHTML = "";
 
         const start = (localPage - 1) * perPage;
         const end = start + perPage;
@@ -427,7 +532,7 @@
           detailsBtn.addEventListener("click", () => openDetails(movie));
 
           block.append(img, title, year, type, detailsBtn);
-          result.appendChild(block);
+          DOM.result.appendChild(block);
         });
       }
 
@@ -435,29 +540,47 @@
         const overlay = document.createElement("div");
         overlay.className = "modal-overlay";
 
+        const modal = document.createElement("div");
+        modal.className = "modal-window";
+
+        const closeModal = document.createElement("span");
+        closeModal.className = "close-modal";
+        closeModal.innerHTML = "&times;";
+        closeModal.onclick = () => overlay.remove();
+
+        const loaderBox = document.createElement("div");
+        loaderBox.className = "loader-box";
+        loaderBox.innerHTML = `<div class="loader"></div>`;
+
         const details = document.createElement("div");
-        details.className = "detailCard";
+        details.className = "details-box";
+        details.style.display = "none";
 
         details.innerHTML = `
-    <img src="${movie.Poster}">
-    <div class="detail-content">
-      <h2>${movie.Title}</h2>
-      <p><strong>Year:</strong> ${movie.Year}</p>
-      <p><strong>Type:</strong> ${movie.Type}</p>
-      <p><strong>IMDB ID:</strong> ${movie.imdbID}</p>
-      <button class="closeDetail">Close</button>
-    </div>
-  `;
-
+        <img src="${movie.Poster}">
+        <div class="detail-content">
+          <h2>${movie.Title}</h2>
+          <p borderBottom = 15px><strong>Year:</strong> ${movie.Year}</p>
+          <p><strong>Type:</strong> ${movie.Type}</p>
+          <p><strong>IMDB ID:</strong> ${movie.imdbID}</p>
+          <button class="closeDetail">Close</button>
+        </div>
+      `;
         details.querySelector(".closeDetail").onclick = () => overlay.remove();
 
-        overlay.appendChild(details);
+        modal.append(closeModal, loaderBox, details);
+        overlay.appendChild(modal);
         document.body.appendChild(overlay);
+
+        setTimeout(() => {
+          loaderBox.style.display = "none";
+          details.style.display = "block";
+        }, 1000);
       }
 
-      closeBtn.addEventListener("click", () => {
-        show.style.display = "none";
-        pagination.style.display = "none";
+      DOM.closeBtn.addEventListener("click", () => {
+        DOM.show.style.display = "none";
+        DOM.pagination.style.display = "none";
       });
     </script>
   </body>
