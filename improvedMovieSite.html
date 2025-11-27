@@ -131,7 +131,8 @@
       }
 
       .showCard {
-        width: 90%;
+        width: 100%;
+        height: 100%;
         max-width: 1000px;
         padding: 20px;
         background: rgba(255, 255, 255, 0.08);
@@ -392,6 +393,9 @@
     </div>
 
     <script type="module">
+      function sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
       class AppDOM {
         constructor() {
           this.wrapper = document.getElementById("wrapp");
@@ -400,11 +404,12 @@
           this.searchBtn = document.getElementById("searchBtn");
           this.show = document.getElementById("found");
           this.result = document.getElementById("result");
-          this.pagination = document.getElementById("Pagination");
+
           this.moreBtn = document.getElementById("More");
           this.closeBtn = document.getElementById("Close");
           this.nodata1 = document.getElementById("noData1");
           this.nodata2 = document.getElementById("noData2");
+          this.found = document.getElementById("found");
 
           this.loader = document.createElement("div");
           this.loader.className = "loader";
@@ -424,7 +429,8 @@
       const DOM = new AppDOM();
 
       let movies = [];
-      let perPage = 3;
+      let perPage = 6;
+      let renderedCount = 0;
       let localPage = 1;
 
       DOM.searchBtn.addEventListener("click", async () => {
@@ -475,32 +481,17 @@
         movies = data.Search;
         localPage = 1;
 
+        renderedCount = 0;
+        DOM.result.innerHTML = "";
+
         DOM.show.style.display = "block";
+
         DOM.moreBtn.style.display = "block";
 
-        renderMovies();
-        renderPagination();
+        renderMore();
+
+        moreButton();
       });
-
-      function renderPagination() {
-        DOM.pagination.innerHTML = "";
-        DOM.pagination.style.display = "flex";
-
-        const totalPages = Math.ceil(movies.length / perPage);
-        for (let i = 1; i <= totalPages; i++) {
-          const btn = document.createElement("button");
-          btn.textContent = i;
-          if (i === localPage) btn.disabled = true;
-
-          btn.addEventListener("click", () => {
-            localPage = i;
-            renderMovies();
-            renderPagination();
-          });
-
-          DOM.pagination.appendChild(btn);
-        }
-      }
 
       function renderMovies() {
         DOM.result.innerHTML = "";
@@ -536,7 +527,7 @@
         });
       }
 
-      function openDetails(movie) {
+      async function openDetails(movie) {
         const overlay = document.createElement("div");
         overlay.className = "modal-overlay";
 
@@ -557,30 +548,78 @@
         details.style.display = "none";
 
         details.innerHTML = `
-        <img src="${movie.Poster}">
-        <div class="detail-content">
-          <h2>${movie.Title}</h2>
-          <p borderBottom = 15px><strong>Year:</strong> ${movie.Year}</p>
-          <p><strong>Type:</strong> ${movie.Type}</p>
-          <p><strong>IMDB ID:</strong> ${movie.imdbID}</p>
-          <button class="closeDetail">Close</button>
-        </div>
-      `;
+    <img src="${movie.Poster}">
+    <div class="detail-content">
+      <h2>${movie.Title}</h2>
+      <p><strong>Year:</strong> ${movie.Year}</p>
+      <p><strong>Type:</strong> ${movie.Type}</p>
+      <p><strong>IMDB ID:</strong> ${movie.imdbID}</p>
+      <button class="closeDetail">Close</button>
+    </div>
+  `;
+
         details.querySelector(".closeDetail").onclick = () => overlay.remove();
 
         modal.append(closeModal, loaderBox, details);
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
 
-        setTimeout(() => {
-          loaderBox.style.display = "none";
-          details.style.display = "block";
-        }, 1000);
+        await sleep(1000);
+
+        loaderBox.style.display = "none";
+        details.style.display = "block";
+      }
+      function renderMore() {
+        const next = movies.slice(renderedCount, renderedCount + perPage);
+
+        next.forEach((movie) => {
+          const block = document.createElement("div");
+          block.className = "movie-card";
+
+          const img = document.createElement("img");
+          img.src = movie.Poster !== "N/A" ? movie.Poster : "";
+
+          const title = document.createElement("h3");
+          title.textContent = movie.Title;
+
+          const year = document.createElement("p");
+          year.textContent = "Year: " + movie.Year;
+
+          const type = document.createElement("p");
+          type.textContent = "Type: " + movie.Type;
+
+          const detailsBtn = document.createElement("button");
+          detailsBtn.textContent = "Details";
+          detailsBtn.className = "detailsBtn";
+          detailsBtn.addEventListener("click", () => openDetails(movie));
+
+          block.append(img, title, year, type, detailsBtn);
+          DOM.result.appendChild(block);
+        });
+
+        renderedCount += next.length;
+
+        if (renderedCount >= movies.length) {
+          DOM.moreBtn.style.display = "none";
+        }
+      }
+
+      function moreButton() {
+        const moreBtn = DOM.moreBtn;
+
+        moreBtn.onclick = async () => {
+          moreBtn.style.display = "none";
+          DOM.loader.style.display = "block";
+
+          await sleep(1000);
+
+          DOM.loader.style.display = "none";
+          renderMore();
+        };
       }
 
       DOM.closeBtn.addEventListener("click", () => {
         DOM.show.style.display = "none";
-        DOM.pagination.style.display = "none";
       });
     </script>
   </body>
